@@ -1,3 +1,4 @@
+import { EMPTY_CONTEXT, signalKeys } from "@/lib/account";
 import type { Account, Intelligence } from "@/lib/types";
 
 /**
@@ -114,6 +115,16 @@ const canva: Intelligence = {
       summary: "The public story keeps pointing at bigger organisations and more international team use.",
     },
   ],
+  callPrep: {
+    opportunity:
+      "The enterprise push is a reason to ask which teams still sit outside the workspace you already support.",
+    risk: "Adoption can spread faster than onboarding, and new groups invent their own way of working.",
+    questions: [
+      "Which new teams are being asked to standardise on Canva, and who owns that rollout?",
+      "Where does brand control slip when a group starts using it on their own?",
+      "What would need to be true for the wider deployment to feel consistent, rather than messy?",
+    ],
+  },
   sources: [
     { title: "Canva Newsroom", url: "https://www.canva.com/newsroom/" },
     { title: "About Canva", url: "https://www.canva.com/about/" },
@@ -231,6 +242,16 @@ const stripe: Intelligence = {
       summary: "More payment methods, workflows, and geographies, with larger merchants as the reference.",
     },
   ],
+  callPrep: {
+    opportunity:
+      "A wider money platform is a reason to ask whether billing and payments still sit with different owners.",
+    risk: "Consolidation stalls when finance and engineering want different things, and the renewal turns into a tooling debate.",
+    questions: [
+      "Where do billing, payments, and finance still sit with different owners?",
+      "What would have to be true before more of the money workflow moved onto one platform?",
+      "Who would feel that change first inside your team?",
+    ],
+  },
   sources: [
     { title: "Stripe Newsroom", url: "https://stripe.com/newsroom" },
     { title: "About Stripe", url: "https://stripe.com/about" },
@@ -349,6 +370,15 @@ const hubspot: Intelligence = {
       summary: "Implementation and the partner ecosystem remain part of how customers go live.",
     },
   ],
+  callPrep: {
+    opportunity: "AI inside the CRM is a reason to ask which workflow they would actually change.",
+    risk: "A push toward deeper platform use often becomes a question about price and packaging.",
+    questions: [
+      "Which workflow would you want AI to change first: marketing, sales, or service?",
+      "Who has to agree before a new HubSpot workflow actually gets used?",
+      "If the platform story is about expanding the account, what does that mean for how you buy?",
+    ],
+  },
   sources: [
     { title: "HubSpot Newsroom", url: "https://www.hubspot.com/company-news" },
     { title: "HubSpot Investor Relations", url: "https://ir.hubspot.com/" },
@@ -366,6 +396,8 @@ function sampleAccount(id: string, intelligence: Intelligence): Account {
     updatedAt: null,
     live: false,
     error: null,
+    context: EMPTY_CONTEXT,
+    seenKeys: signalKeys(intelligence),
   };
 }
 

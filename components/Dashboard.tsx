@@ -2,7 +2,9 @@
 
 import { Menu } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AccountNotes } from "@/components/AccountNotes";
 import { AttentionLanes } from "@/components/AttentionLanes";
+import { CallPrep } from "@/components/CallPrep";
 import { FinanceStrip } from "@/components/FinanceStrip";
 import { AccountHeader } from "@/components/AccountHeader";
 import { AddAccountModal } from "@/components/AddAccountModal";
@@ -14,13 +16,14 @@ import { SignalList } from "@/components/SignalList";
 import { Sources } from "@/components/Sources";
 import { StatusCard } from "@/components/StatusCard";
 import { StrategicThemes } from "@/components/StrategicThemes";
+import { EMPTY_CONTEXT, signalKeys, unseenSignalKeys } from "@/lib/account";
 import { hasUsableBrief } from "@/lib/brief";
 import { companyKey } from "@/lib/company";
 import { DEMO_ACCOUNTS, DEFAULT_ACCOUNT_ID } from "@/lib/demo-data";
 import { messageFor } from "@/lib/format";
 import { requestIntelligence } from "@/lib/research-client";
 import { hydrateAccounts, parsePersisted, readPersistedRaw, savePersisted } from "@/lib/storage";
-import type { Account } from "@/lib/types";
+import type { Account, AccountContext } from "@/lib/types";
 
 const SERVER_SNAPSHOT = "__server__";
 
@@ -42,6 +45,7 @@ export function Dashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [researchingIds, setResearchingIds] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [freshKeys, setFreshKeys] = useState<Record<string, string[]>>({});
   const requests = useRef(new Map<string, number>());
   const accountsRef = useRef(accounts);
   const selectedIdRef = useRef(selectedId);
@@ -74,6 +78,14 @@ export function Dashboard() {
   const researching = selected ? researchingIds.includes(selected.id) : false;
 
   function selectAccount(id: string) {
+    const account = accounts.find((item) => item.id === id);
+    const fresh = account ? unseenSignalKeys(account) : [];
+    if (fresh.length > 0) {
+      setFreshKeys((current) => ({ ...current, [id]: fresh }));
+      setAccounts((current) =>
+        current.map((item) => (item.id === id ? { ...item, seenKeys: signalKeys(item.intelligence) } : item)),
+      );
+    }
     setSelectedId(id);
     setNotice(null);
     setMobileOpen(false);
@@ -81,6 +93,10 @@ export function Dashboard() {
   }
 
   function goHome() {
+    if (selected) {
+      const keys = signalKeys(selected.intelligence);
+      setAccounts((current) => current.map((item) => (item.id === selected.id ? { ...item, seenKeys: keys } : item)));
+    }
     setNotice(null);
     setMobileOpen(false);
     setScreen("home");
@@ -106,13 +122,18 @@ export function Dashboard() {
     setResearchingIds((current) => current.filter((id) => id !== accountId));
   }
 
-  async function research(accountId: string, company: string) {
+  function updateContext(accountId: string, context: AccountContext) {
+    setAccounts((current) => current.map((item) => (item.id === accountId ? { ...item, context } : item)));
+  }
+
+  async function research(accountId: string, company: string, notes?: AccountContext) {
     const sequence = (requests.current.get(accountId) ?? 0) + 1;
     requests.current.set(accountId, sequence);
     beginResearch(accountId);
     setNotice(null);
 
-    const result = await requestIntelligence(company);
+    const notesForRequest = notes ?? accountsRef.current.find((item) => item.id === accountId)?.context;
+    const result = await requestIntelligence(company, notesForRequest);
     if (requests.current.get(accountId) !== sequence) return;
 
     const account = accountsRef.current.find((item) => item.id === accountId);
@@ -125,6 +146,13 @@ export function Dashboard() {
 
     if (result.ok && hasUsableBrief(result.intelligence)) {
       const intelligence = result.intelligence;
+      const arrived = signalKeys(intelligence).filter((key) => !new Set(account.seenKeys ?? []).has(key));
+      if (stillViewing && arrived.length > 0) {
+        setFreshKeys((current) => ({
+          ...current,
+          [accountId]: Array.from(new Set([...(current[accountId] ?? []), ...arrived])),
+        }));
+      }
       setAccounts((current) =>
         current.map((item) =>
           item.id === accountId
@@ -199,9 +227,8 @@ export function Dashboard() {
     setModalOpen(false);
 
     if (existing) {
-      setSelectedId(existing.id);
-      setMobileOpen(false);
-      void research(existing.id, company);
+      selectAccount(existing.id);
+      void research(existing.id, company, existing.context);
       return;
     }
 
@@ -213,6 +240,8 @@ export function Dashboard() {
       updatedAt: null,
       live: false,
       error: null,
+      context: EMPTY_CONTEXT,
+      seenKeys: [],
     };
 
     setAccounts((current) => [...current, account]);
@@ -281,8 +310,14 @@ export function Dashboard() {
               <AccountHeader
                 account={selected}
                 refreshing={false}
-                onRefresh={() => void research(selected.id, selected.name)}
+                onRefresh={() => void research(selected.id, selected.name, selected.context)}
                 onRemove={() => removeAccount(selected.id)}
+              />
+
+              <AccountNotes
+                key={selected.id}
+                context={selected.context ?? EMPTY_CONTEXT}
+                onSave={(context) => updateContext(selected.id, context)}
               />
 
               {notice ? (
@@ -292,7 +327,11 @@ export function Dashboard() {
               ) : null}
 
               {hasUsableBrief(selected.intelligence) && selected.intelligence ? (
-                <Brief intelligence={selected.intelligence} sample={selected.origin === "sample" && !selected.live} name={selected.name} />
+                <Brief
+                  account={selected}
+                  freshKeys={freshKeys[selected.id] ?? []}
+                  sample={selected.origin === "sample" && !selected.live}
+                />
               ) : (
                 <>
                   <StatusCard
@@ -302,7 +341,7 @@ export function Dashboard() {
                       "We couldn’t find enough recent, credible public information to build a strong account brief for this company."
                     }
                     actionLabel="Try again"
-                    onAction={() => void research(selected.id, selected.name)}
+                    onAction={() => void research(selected.id, selected.name, selected.context)}
                   />
                   {selected.intelligence?.sources?.length ? <Sources sources={selected.intelligence.sources} /> : null}
                 </>
@@ -318,14 +357,18 @@ export function Dashboard() {
 }
 
 function Brief({
-  intelligence,
+  account,
+  freshKeys,
   sample,
-  name,
 }: {
-  intelligence: NonNullable<Account["intelligence"]>;
+  account: Account;
+  freshKeys: string[];
   sample: boolean;
-  name: string;
 }) {
+  const intelligence = account.intelligence;
+  if (!intelligence) return null;
+  const name = account.name;
+
   return (
     <div className="space-y-10">
       <section>
@@ -348,12 +391,13 @@ function Brief({
 
       <FinanceStrip finance={intelligence.finance} ownership={intelligence.company.ownership} />
       {intelligence.shareToday ? <ShareToday share={intelligence.shareToday} /> : null}
+      <CallPrep account={account} />
       {intelligence.attention?.length ? (
         <AttentionLanes items={intelligence.attention} summary={intelligence.themeSummary} />
       ) : (
         <StrategicThemes themes={intelligence.themes} summary={intelligence.themeSummary} />
       )}
-      <SignalList signals={intelligence.signals} />
+      <SignalList signals={intelligence.signals} freshKeys={freshKeys} />
       <Sources sources={intelligence.sources} />
     </div>
   );

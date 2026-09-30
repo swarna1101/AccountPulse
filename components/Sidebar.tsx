@@ -3,6 +3,7 @@
 import { Plus, X } from "lucide-react";
 import { AccountAvatar } from "@/components/AccountAvatar";
 import { LogoMark } from "@/components/Logo";
+import { unseenSignalKeys } from "@/lib/account";
 import { cn } from "@/lib/format";
 import type { Account } from "@/lib/types";
 
@@ -63,6 +64,7 @@ export function Sidebar({
             {accounts.map((account) => {
               const selected = account.id === selectedId;
               const researching = researchingIds.includes(account.id);
+              const unseen = unseenSignalKeys(account).length;
               return (
                 <li key={account.id}>
                   <div
@@ -84,6 +86,8 @@ export function Sidebar({
                       <span className="truncate">{account.name}</span>
                       {researching ? (
                         <span className="ml-auto size-1.5 shrink-0 animate-pulse rounded-full bg-accent" aria-hidden="true" />
+                      ) : unseen > 0 ? (
+                        <span className="ml-auto shrink-0 text-[11px] font-medium text-accent-ink">New</span>
                       ) : null}
                     </button>
                     {account.origin === "custom" ? (

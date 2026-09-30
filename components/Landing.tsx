@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { AccountAvatar } from "@/components/AccountAvatar";
 import { LogoMark } from "@/components/Logo";
+import { unseenSignalKeys } from "@/lib/account";
 import { isValidCompanyName, normalizeCompanyName } from "@/lib/company";
 import type { Account } from "@/lib/types";
 
@@ -43,6 +44,10 @@ export function Landing({
     (account): account is Account => Boolean(account),
   );
   const saved = accounts.filter((account) => account.origin === "custom");
+  const moved = accounts
+    .map((account) => ({ account, count: unseenSignalKeys(account).length }))
+    .filter((item) => item.count > 0);
+  const watched = accounts.some((account) => account.origin === "custom" || account.live);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -111,6 +116,37 @@ export function Landing({
             </p>
           )}
         </form>
+
+        {moved.length > 0 || watched ? (
+          <section className="mt-10" aria-labelledby="since-heading">
+            <h2 id="since-heading" className="text-[13px] font-medium text-ink">
+              Since you last looked
+            </h2>
+            {moved.length > 0 ? (
+              <ul className="mt-3 flex flex-col gap-2">
+                {moved.map(({ account, count }) => (
+                  <li key={account.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpen(account.id)}
+                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-line bg-white px-3 py-3 text-left transition-colors hover:border-[#c9c6ee]"
+                    >
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <AccountAvatar name={account.name} />
+                        <span className="truncate text-[14px] font-medium text-ink">{account.name}</span>
+                      </span>
+                      <span className="shrink-0 text-[12.5px] text-accent-ink">
+                        {count} new {count === 1 ? "signal" : "signals"}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-[13.5px] leading-6 text-muted">Nothing new since you last looked.</p>
+            )}
+          </section>
+        ) : null}
 
         <section className="mt-10" aria-labelledby="outcomes-heading">
           <h2 id="outcomes-heading" className="text-[13px] font-medium text-ink">

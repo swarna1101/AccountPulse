@@ -67,6 +67,19 @@ export type Source = {
   url: string;
 };
 
+export type CallPrep = {
+  opportunity: string;
+  risk: string;
+  questions: string[];
+};
+
+export type AccountContext = {
+  renewal: string;
+  product: string;
+  champion: string;
+  goal: string;
+};
+
 export type Intelligence = {
   company: CompanyProfile;
   executiveSummary: string;
@@ -76,6 +89,7 @@ export type Intelligence = {
   themeSummary: string;
   finance: FinancePicture;
   attention: AttentionItem[];
+  callPrep: CallPrep;
   sources: Source[];
   insufficientData: boolean;
 };
@@ -90,6 +104,8 @@ export type Account = {
   updatedAt: string | null;
   live: boolean;
   error: string | null;
+  context: AccountContext;
+  seenKeys: string[];
 };
 
 export type ApiErrorCode =

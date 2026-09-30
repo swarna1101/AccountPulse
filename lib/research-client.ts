@@ -1,9 +1,11 @@
-import type { ApiErrorCode, Intelligence, IntelligenceApiResponse } from "@/lib/types";
+import { hasContext } from "@/lib/account";
+import type { AccountContext, ApiErrorCode, Intelligence, IntelligenceApiResponse } from "@/lib/types";
 
 const CLIENT_TIMEOUT_MS = 58_000;
 
 export async function requestIntelligence(
   company: string,
+  context?: AccountContext,
 ): Promise<{ ok: true; intelligence: Intelligence } | { ok: false; code: ApiErrorCode | "network" }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CLIENT_TIMEOUT_MS);
@@ -12,7 +14,10 @@ export async function requestIntelligence(
     const response = await fetch("/api/intelligence", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ company }),
+      body: JSON.stringify({
+        company,
+        context: context && hasContext(context) ? context : undefined,
+      }),
       signal: controller.signal,
     });
 

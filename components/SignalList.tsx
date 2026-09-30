@@ -9,6 +9,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { signalKey } from "@/lib/account";
 import { formatSignalDate } from "@/lib/format";
 import type { Signal, SignalCategory } from "@/lib/types";
 
@@ -23,7 +24,7 @@ const ICONS: Record<SignalCategory, LucideIcon> = {
   Strategy: Compass,
 };
 
-export function SignalList({ signals }: { signals: Signal[] }) {
+export function SignalList({ signals, freshKeys = [] }: { signals: Signal[]; freshKeys?: string[] }) {
   if (signals.length === 0) return null;
 
   return (
@@ -34,6 +35,7 @@ export function SignalList({ signals }: { signals: Signal[] }) {
       <div className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
         {signals.map((signal) => {
           const Icon = ICONS[signal.category];
+          const isNew = freshKeys.includes(signalKey(signal.headline));
           return (
             <article key={`${signal.category}-${signal.headline}`} className="px-5 py-4 sm:px-6">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-muted">
@@ -41,6 +43,9 @@ export function SignalList({ signals }: { signals: Signal[] }) {
                 <span className="font-medium text-ink-soft">{signal.category}</span>
                 <span aria-hidden="true">·</span>
                 <time dateTime={signal.date || undefined}>{formatSignalDate(signal.date)}</time>
+                {isNew ? (
+                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-ink">New</span>
+                ) : null}
                 {signal.importance === "high" ? (
                   <span className="ml-auto rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent-ink">
                     High relevance

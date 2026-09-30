@@ -15,15 +15,15 @@ export async function POST(request: Request) {
     return fail("invalid_company", 400);
   }
 
-  const company =
-    body && typeof body === "object" && "company" in body ? (body as { company: unknown }).company : undefined;
+  const record = body && typeof body === "object" ? (body as { company?: unknown; context?: unknown }) : {};
+  const company = record.company;
 
   if (typeof company !== "string" || !isValidCompanyName(company)) {
     return fail("invalid_company", 400);
   }
 
   try {
-    const intelligence = await researchCompany(normalizeCompanyName(company));
+    const intelligence = await researchCompany(normalizeCompanyName(company), record.context);
     return NextResponse.json({ ok: true, intelligence });
   } catch (error) {
     const code: ApiErrorCode = error instanceof IntelligenceError ? error.code : "unavailable";
