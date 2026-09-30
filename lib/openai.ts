@@ -2,15 +2,20 @@ import OpenAI, { APIConnectionTimeoutError, APIError } from "openai";
 import { isValidCompanyName, normalizeCompanyName } from "@/lib/company";
 import type {
   ApiErrorCode,
+  AttentionItem,
+  AttentionLane,
   CompanyProfile,
+  FinanceDirection,
+  FinancePicture,
   Importance,
   Intelligence,
+  Ownership,
   ShareToday,
   Signal,
   SignalCategory,
   Source,
 } from "@/lib/types";
-import { SIGNAL_CATEGORIES } from "@/lib/types";
+import { ATTENTION_LANES, SIGNAL_CATEGORIES } from "@/lib/types";
 
 const MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-5.4-mini";
 const REQUEST_TIMEOUT_MS = 52_000;
@@ -44,6 +49,8 @@ Look for leadership changes, hiring, expansion, funding, partnerships, acquisiti
 Distinguish meaningful signals from general company noise.
 
 Ignore generic SEO articles, minor social posts, irrelevant event mentions, repetitive press coverage, and stock-price moves that carry no strategic meaning.
+
+For the money picture, use only a disclosed public fact: reported revenue, funding, or a clearly stated business result, with its period. If the company is private or the number is not public, set finance.available to false. Never estimate, round from memory, or infer a figure. Do not include a stock price.
 
 For each signal, explain why it could matter in the context of customer success.
 
@@ -81,8 +88,24 @@ Return this JSON shape:
     "description": "short phrase describing what the company does",
     "industry": "short industry label",
     "location": "headquarters city and country, or empty string",
-    "website": "domain only, such as example.com"
+    "website": "domain only, such as example.com",
+    "ownership": "public | private | unknown"
   },
+  "finance": {
+    "available": false,
+    "fact": "one public fact, such as reported revenue or a funding round, or empty",
+    "period": "the period that fact belongs to, such as Q2 2026, or empty",
+    "direction": "growing | tightening | raising | steady | unknown",
+    "whyItMatters": "one sentence on what the money picture means for a customer relationship, or empty"
+  },
+  "attention": [
+    {
+      "lane": "Product | People | Money | Market",
+      "status": "active | quiet",
+      "headline": "the strongest recent change in this lane, or empty if quiet",
+      "summary": "one sentence, or empty if quiet"
+    }
+  ],
   "executiveSummary": "one or two calm sentences a CSM could read in ten seconds",
   "shareToday": {
     "category": "People | Hiring | Product | Funding | Partnership | Expansion | Financial | Strategy",
@@ -111,7 +134,9 @@ Rules:
 - importance "high" only if a CSM should consider raising it in an upcoming conversation.
 - Do not include citation markers, footnotes, markdown, or URLs inside the JSON strings.
 - Do not wrap the JSON in code fences.
-- If the company cannot be identified, or recent credible evidence is too thin, set insufficientData to true and return no signals.`;
+- Return exactly four attention lanes, in this order: Product, People, Money, Market. Mark a lane quiet when there is no credible recent change.
+- finance.available is true only when fact is a real disclosed number or round. Otherwise false, with fact and period empty.
+- If the company cannot be identified, or recent credible evidence is too thin, set insufficientData to true and return no signals. Still include ownership when it is publicly known.`;
 }
 
 export async function researchCompany(rawCompany: string): Promise<Intelligence> {
@@ -280,6 +305,8 @@ function normalizeIntelligence(value: unknown, requestedName: string, sources: S
     signals: insufficientData ? [] : signals,
     themes: insufficientData ? [] : themes,
     themeSummary: insufficientData ? "" : clip(cleanProse(asString(record.themeSummary)), 280),
+    finance: normalizeFinance(record.finance),
+    attention: insufficientData ? emptyAttention() : normalizeAttention(record.attention),
     sources,
     insufficientData,
   };
@@ -298,7 +325,70 @@ function normalizeCompany(record: Record<string, unknown>, requestedName: string
     industry: clip(cleanProse(asString(record.industry)), 80),
     location: clip(cleanProse(asString(record.location)), 80),
     website,
+    ownership: normalizeOwnership(record.ownership),
   };
+}
+
+function normalizeOwnership(value: unknown): Ownership {
+  const raw = asString(value).toLowerCase();
+  if (raw === "public" || raw.includes("publicly")) return "public";
+  if (raw === "private" || raw.includes("privately")) return "private";
+  return "unknown";
+}
+
+function normalizeFinance(value: unknown): FinancePicture {
+  const record = asRecord(value);
+  const fact = clip(cleanProse(asString(record.fact)), 180);
+  const period = clip(cleanProse(asString(record.period)), 40);
+  const whyItMatters = clip(cleanProse(asString(record.whyItMatters)), 220);
+  const available = record.available === true && fact.length > 0;
+
+  if (!available) {
+    return { available: false, fact: "", period: "", direction: "unknown", whyItMatters: "" };
+  }
+
+  return {
+    available: true,
+    fact,
+    period,
+    direction: normalizeDirection(record.direction),
+    whyItMatters,
+  };
+}
+
+function normalizeDirection(value: unknown): FinanceDirection {
+  const raw = asString(value).toLowerCase();
+  if (raw === "growing" || raw === "growth") return "growing";
+  if (raw === "tightening" || raw === "contracting" || raw.includes("cost")) return "tightening";
+  if (raw === "raising" || raw.includes("fund")) return "raising";
+  if (raw === "steady" || raw === "stable") return "steady";
+  return "unknown";
+}
+
+function normalizeAttention(value: unknown): AttentionItem[] {
+  const provided = Array.isArray(value) ? value : [];
+  return ATTENTION_LANES.map((lane) => {
+    const match = provided.find((item) => normalizeLane(asRecord(item).lane) === lane);
+    const record = asRecord(match);
+    const headline = clip(cleanProse(asString(record.headline)), 90);
+    const summary = clip(cleanProse(asString(record.summary)), 180);
+    const active = record.status !== "quiet" && headline.length > 0;
+    return {
+      lane,
+      status: active ? "active" : "quiet",
+      headline: active ? headline : "",
+      summary: active ? summary : "",
+    };
+  });
+}
+
+function emptyAttention(): AttentionItem[] {
+  return ATTENTION_LANES.map((lane) => ({ lane, status: "quiet", headline: "", summary: "" }));
+}
+
+function normalizeLane(value: unknown): AttentionLane | null {
+  const raw = asString(value).toLowerCase();
+  return ATTENTION_LANES.find((lane) => lane.toLowerCase() === raw) ?? null;
 }
 
 function normalizeShare(value: unknown): ShareToday | null {

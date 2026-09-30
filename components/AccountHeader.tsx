@@ -26,11 +26,16 @@ export function AccountHeader({
       <div className="flex min-w-0 items-start gap-3.5">
         <AccountAvatar name={account.name} size="md" />
         <div className="min-w-0 pt-0.5">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-[1.35rem] font-semibold tracking-tight text-ink">{account.name}</p>
             {showSample ? (
               <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
                 Sample
+              </span>
+            ) : null}
+            {profile?.ownership === "public" || profile?.ownership === "private" ? (
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-muted ring-1 ring-line">
+                {profile.ownership === "public" ? "Public" : "Private"}
               </span>
             ) : null}
           </div>

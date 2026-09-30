@@ -2,6 +2,8 @@
 
 import { Menu } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AttentionLanes } from "@/components/AttentionLanes";
+import { FinanceStrip } from "@/components/FinanceStrip";
 import { AccountHeader } from "@/components/AccountHeader";
 import { AddAccountModal } from "@/components/AddAccountModal";
 import { Landing } from "@/components/Landing";
@@ -43,8 +45,13 @@ export function Dashboard() {
   const requests = useRef(new Map<string, number>());
   const accountsRef = useRef(accounts);
   const selectedIdRef = useRef(selectedId);
+  const lastSaved = useRef<string | null>(null);
 
-  if (snapshot !== SERVER_SNAPSHOT && snapshot !== appliedSnapshot) {
+  if (
+    snapshot !== SERVER_SNAPSHOT &&
+    snapshot !== appliedSnapshot &&
+    snapshot !== lastSaved.current
+  ) {
     setAppliedSnapshot(snapshot);
     const next = hydrateAccounts(parsePersisted(snapshot));
     setAccounts(next.accounts);
@@ -58,7 +65,7 @@ export function Dashboard() {
 
   useEffect(() => {
     if (appliedSnapshot === null) return;
-    savePersisted(accounts, selectedId);
+    lastSaved.current = savePersisted(accounts, selectedId);
   }, [accounts, selectedId, appliedSnapshot]);
 
   const closeModal = useCallback(() => setModalOpen(false), []);
@@ -339,9 +346,14 @@ function Brief({
         ) : null}
       </section>
 
+      <FinanceStrip finance={intelligence.finance} ownership={intelligence.company.ownership} />
       {intelligence.shareToday ? <ShareToday share={intelligence.shareToday} /> : null}
+      {intelligence.attention?.length ? (
+        <AttentionLanes items={intelligence.attention} summary={intelligence.themeSummary} />
+      ) : (
+        <StrategicThemes themes={intelligence.themes} summary={intelligence.themeSummary} />
+      )}
       <SignalList signals={intelligence.signals} />
-      <StrategicThemes themes={intelligence.themes} summary={intelligence.themeSummary} />
       <Sources sources={intelligence.sources} />
     </div>
   );

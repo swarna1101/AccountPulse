@@ -13,12 +13,36 @@ export type SignalCategory = (typeof SIGNAL_CATEGORIES)[number];
 
 export type Importance = "high" | "medium" | "low";
 
+export type Ownership = "public" | "private" | "unknown";
+
 export type CompanyProfile = {
   name: string;
   description: string;
   industry: string;
   location: string;
   website: string;
+  ownership: Ownership;
+};
+
+export type FinanceDirection = "growing" | "tightening" | "raising" | "steady" | "unknown";
+
+export type FinancePicture = {
+  available: boolean;
+  fact: string;
+  period: string;
+  direction: FinanceDirection;
+  whyItMatters: string;
+};
+
+export const ATTENTION_LANES = ["Product", "People", "Money", "Market"] as const;
+
+export type AttentionLane = (typeof ATTENTION_LANES)[number];
+
+export type AttentionItem = {
+  lane: AttentionLane;
+  status: "active" | "quiet";
+  headline: string;
+  summary: string;
 };
 
 export type ShareToday = {
@@ -50,6 +74,8 @@ export type Intelligence = {
   signals: Signal[];
   themes: string[];
   themeSummary: string;
+  finance: FinancePicture;
+  attention: AttentionItem[];
   sources: Source[];
   insufficientData: boolean;
 };

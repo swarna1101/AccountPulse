@@ -72,8 +72,8 @@ export function loadPersisted(): PersistedState | null {
   return parsePersisted(readPersistedRaw());
 }
 
-export function savePersisted(accounts: Account[], selectedId: string): void {
-  if (typeof window === "undefined") return;
+export function savePersisted(accounts: Account[], selectedId: string): string | null {
+  if (typeof window === "undefined") return null;
 
   const overrides: Record<string, Override> = {};
   for (const account of accounts) {
@@ -90,12 +90,15 @@ export function savePersisted(accounts: Account[], selectedId: string): void {
     custom: accounts.filter((account) => account.origin === "custom"),
     overrides,
   };
+  const raw = JSON.stringify(state);
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(STORAGE_KEY, raw);
   } catch {
     // Persistence is helpful, not required. A full quota should not break the brief.
   }
+
+  return raw;
 }
 
 export function hydrateAccounts(stored: PersistedState | null): { accounts: Account[]; selectedId: string } {

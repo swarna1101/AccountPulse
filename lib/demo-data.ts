@@ -12,6 +12,7 @@ const canva: Intelligence = {
     industry: "Software",
     location: "Sydney, Australia",
     website: "canva.com",
+    ownership: "private",
   },
   executiveSummary:
     "Canva appears to be accelerating its enterprise strategy through product expansion and organisational growth.",
@@ -80,6 +81,39 @@ const canva: Intelligence = {
   themes: ["Enterprise expansion", "AI in the workflow", "International growth"],
   themeSummary:
     "Recent signals suggest Canva is placing increased emphasis on enterprise adoption and international expansion.",
+  finance: {
+    available: false,
+    fact: "",
+    period: "",
+    direction: "unknown",
+    whyItMatters: "",
+  },
+  attention: [
+    {
+      lane: "Product",
+      status: "active",
+      headline: "AI is moving into the everyday workflow",
+      summary: "Creation, editing, and brand-aware tools are being treated as part of the product, not a side experiment.",
+    },
+    {
+      lane: "People",
+      status: "active",
+      headline: "Hiring leans toward larger customers",
+      summary: "Public hiring signals sit with enterprise sales, success, and solutions rather than only consumer growth.",
+    },
+    {
+      lane: "Money",
+      status: "quiet",
+      headline: "",
+      summary: "",
+    },
+    {
+      lane: "Market",
+      status: "active",
+      headline: "The footprint is widening past design teams",
+      summary: "The public story keeps pointing at bigger organisations and more international team use.",
+    },
+  ],
   sources: [
     { title: "Canva Newsroom", url: "https://www.canva.com/newsroom/" },
     { title: "About Canva", url: "https://www.canva.com/about/" },
@@ -95,6 +129,7 @@ const stripe: Intelligence = {
     industry: "Financial software",
     location: "South San Francisco, California",
     website: "stripe.com",
+    ownership: "private",
   },
   executiveSummary:
     "Stripe is widening the surface of its platform — payments, billing, and adjacent money movement — with larger businesses as the reference customer.",
@@ -163,6 +198,39 @@ const stripe: Intelligence = {
   themes: ["Platform consolidation", "Enterprise merchants", "Money movement"],
   themeSummary:
     "Recent signals suggest Stripe wants larger customers to run more of their financial workflow on the platform, not just card payments.",
+  finance: {
+    available: false,
+    fact: "",
+    period: "",
+    direction: "unknown",
+    whyItMatters: "",
+  },
+  attention: [
+    {
+      lane: "Product",
+      status: "active",
+      headline: "Billing and payments are one system",
+      summary: "The public product story treats them as one platform, not two tools a company happens to buy.",
+    },
+    {
+      lane: "People",
+      status: "quiet",
+      headline: "",
+      summary: "",
+    },
+    {
+      lane: "Money",
+      status: "active",
+      headline: "The posture is durability, not a spike",
+      summary: "Public comments emphasise scale and reliability more than a single growth moment.",
+    },
+    {
+      lane: "Market",
+      status: "active",
+      headline: "Coverage keeps widening",
+      summary: "More payment methods, workflows, and geographies, with larger merchants as the reference.",
+    },
+  ],
   sources: [
     { title: "Stripe Newsroom", url: "https://stripe.com/newsroom" },
     { title: "About Stripe", url: "https://stripe.com/about" },
@@ -178,6 +246,7 @@ const hubspot: Intelligence = {
     industry: "Software",
     location: "Cambridge, Massachusetts",
     website: "hubspot.com",
+    ownership: "public",
   },
   executiveSummary:
     "HubSpot is tying its growth story to the customer platform, and to AI that sits inside day-to-day marketing, sales, and service work.",
@@ -246,6 +315,40 @@ const hubspot: Intelligence = {
   themes: ["AI in the CRM", "Platform adoption", "Partner-led delivery"],
   themeSummary:
     "Recent signals suggest HubSpot is asking customers to go deeper on the platform, with AI as the reason to change how teams work.",
+  finance: {
+    available: true,
+    fact: "Public updates emphasise customer growth and platform revenue, rather than a single product cycle.",
+    period: "Recent public updates",
+    direction: "growing",
+    whyItMatters:
+      "Customers notice when a vendor’s story is about expanding accounts. They will ask what that means for price and packaging.",
+  },
+  attention: [
+    {
+      lane: "Product",
+      status: "active",
+      headline: "AI is being placed inside the CRM",
+      summary: "The emphasis is on marketing, sales, and service workflows, not a separate assistant.",
+    },
+    {
+      lane: "People",
+      status: "active",
+      headline: "Teams are still being staffed for the platform",
+      summary: "Hiring signals support the product and the people who land and expand it.",
+    },
+    {
+      lane: "Money",
+      status: "active",
+      headline: "The public story is durable customer growth",
+      summary: "Updates point at customer and platform revenue more than one launch.",
+    },
+    {
+      lane: "Market",
+      status: "active",
+      headline: "Partners still carry a lot of delivery",
+      summary: "Implementation and the partner ecosystem remain part of how customers go live.",
+    },
+  ],
   sources: [
     { title: "HubSpot Newsroom", url: "https://www.hubspot.com/company-news" },
     { title: "HubSpot Investor Relations", url: "https://ir.hubspot.com/" },
