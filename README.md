@@ -25,7 +25,7 @@ Under that are the supporting signals, the broader pattern, and the public sourc
 
 ## How to try it
 
-Open the site. Type any company and choose **Try any company**.
+Open [accountpulse.vercel.app](https://accountpulse.vercel.app). Type any company and choose **Try any company**.
 
 To see a finished brief before you search, open a sample: Canva, Stripe, or HubSpot. Those are prepared examples, so you can read the product first.
 
@@ -39,6 +39,10 @@ Companies you search are kept in the sidebar on that browser, so you can come ba
 - If there is not enough credible public information, the tool says so. It does not fill the gaps.
 - The suggested line should sound like a well-informed colleague, not a sales pitch.
 - There are no user accounts. A company you add stays in that browser, on that computer.
+
+## How it is made
+
+A live search uses OpenAI. It looks at recent public information about the company and writes the brief: what changed, why it matters, and what to say. The sample accounts are prepared in advance, so they can be read without a search.
 
 ## How it is shaped
 
